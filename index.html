@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Barras de vida</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,800&display=swap">
+<style>
+  :root { --fondo:#17252b; --tarjeta:#1f333b; --texto:#ece6d6; --suave:#9fb0b3; --linea:#33505a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--fondo); color:var(--texto); font-family:'Fraunces',Georgia,serif; }
+  main { max-width:480px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:1.6rem; margin:0 0 20px; font-weight:800; }
+  input, button { font:inherit; color:inherit; }
+  input { width:100%; padding:12px 14px; background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; margin-bottom:12px; }
+  button { cursor:pointer; background:var(--linea); border:0; border-radius:8px; padding:10px 14px; }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--texto); outline-offset:2px; }
+  .oculto { display:none !important; }
+  .tarjeta { background:var(--tarjeta); border-radius:12px; padding:16px; margin-bottom:14px; }
+  .fila { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .nombre { font-size:1.2rem; font-weight:500; }
+  .hp { font-size:2.6rem; font-weight:800; line-height:1; }
+  .hp small { font-size:1rem; font-weight:500; color:var(--suave); }
+  .barra { height:14px; background:#0f1a1e; border-radius:7px; overflow:hidden; }
+  .barra i { display:block; height:100%; transition:width .4s, background .4s; }
+  .botones { display:flex; gap:8px; margin-top:14px; }
+  .botones button { flex:1; font-weight:800; }
+  .botones .borrar { flex:0 0 auto; background:#5a2a2e; }
+  .suave { color:var(--suave); }
+  .enlace { background:none; color:var(--suave); text-decoration:underline; padding:8px 0; margin-top:16px; }
+  .alta { display:grid; grid-template-columns:1fr 90px; gap:8px; }
+  .alta button { grid-column:1/-1; background:#2f6b4f; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Barras de vida</h1>
+
+  <!-- Jugadores -->
+  <div id="zonaJugador">
+    <input id="nombre" placeholder="Escribe el nombre de tu personaje" autocomplete="off">
+  </div>
+
+  <!-- Login del DJ -->
+  <div id="zonaLogin" class="oculto">
+    <input id="correo" type="email" placeholder="Correo del DJ">
+    <input id="clave" type="password" placeholder="Contraseña">
+    <button id="entrar">Entrar como DJ</button>
+    <p id="errorLogin" class="suave"></p>
+  </div>
+
+  <!-- Alta de personajes (solo DJ) -->
+  <form id="zonaAlta" class="alta tarjeta oculto">
+    <input id="altaNombre" placeholder="Nombre del personaje" required>
+    <input id="altaMax" type="number" min="1" placeholder="HP máx." required>
+    <button type="submit">Agregar personaje</button>
+  </form>
+
+  <div id="barras"></div>
+
+  <button id="modo" class="enlace">Soy el DJ</button>
+</main>
+
+<script type="module">
+/* ============ 1. PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE ============ */
+const firebaseConfig = {
+  apiKey: "PEGAR_AQUI",
+  authDomain: "",
+  databaseURL: "",
+  projectId: "",
+  appId: ""
+};
+/* Mientras diga "PEGAR_AQUI" la página funciona en MODO DEMO
+   (datos de prueba, solo en tu pantalla, sin sincronizar). */
+/* ================================================================== */
+
+const DEMO = firebaseConfig.apiKey === "PEGAR_AQUI";
+const MAX_PERSONAJES = 6;
+const $ = s => document.querySelector(s);
+const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let personajes = {};
+let esDJ = false;
+let almacen;
+
+/* ---------- Almacén de datos: demo o Firebase ---------- */
+if (DEMO) {
+  personajes = {
+    a: { nombre: "Thorin", hp: 24, max: 30 },
+    b: { nombre: "Lyra", hp: 9, max: 18 }
+  };
+  almacen = {
+    guardar: (id, d) => { personajes[id] = d; pintar(); },
+    borrar: id => { delete personajes[id]; pintar(); },
+    entrar: async () => { esDJ = true; vista(); },
+    salir: async () => { esDJ = false; vista(); }
+  };
+} else {
+  const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const { initializeApp } = await import(base + "firebase-app.js");
+  const { getDatabase, ref, onValue, set, remove } = await import(base + "firebase-database.js");
+  const { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = await import(base + "firebase-auth.js");
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+  onValue(ref(db, "personajes"), snap => { personajes = snap.val() || {}; pintar(); });
+  onAuthStateChanged(auth, u => { esDJ = !!u; vista(); });
+  almacen = {
+    guardar: (id, d) => set(ref(db, "personajes/" + id), d),
+    borrar: id => remove(ref(db, "personajes/" + id)),
+    entrar: (c, p) => signInWithEmailAndPassword(auth, c, p),
+    salir: () => signOut(auth)
+  };
+}
+
+/* ---------- Dibujo ---------- */
+function colorBarra(p) { return p > 50 ? "#7fb069" : p > 25 ? "#e0a030" : "#d64545"; }
+
+function pintar() {
+  const todos = Object.entries(personajes);
+  const buscado = norm($("#nombre").value);
+  const visibles = esDJ ? todos : todos.filter(([, c]) => buscado && norm(c.nombre) === buscado);
+
+  if (!visibles.length) {
+    $("#barras").innerHTML = `<p class="suave">${
+      esDJ ? "Aún no hay personajes. Agrega el primero arriba."
+           : buscado ? "No hay ningún personaje con ese nombre. Revisa cómo está escrito."
+                     : "Escribe el nombre de tu personaje para ver su vida."}</p>`;
+    return;
+  }
+
+  $("#barras").innerHTML = visibles.map(([id, c]) => {
+    const p = Math.max(0, Math.min(100, c.hp / c.max * 100));
+    const controles = esDJ ? `
+      <div class="botones">
+        ${[-5, -1, 1, 5].map(d => `<button data-id="${id}" data-d="${d}" aria-label="${d > 0 ? 'Curar' : 'Dañar'} ${Math.abs(d)}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}
+        <button class="borrar" data-id="${id}" data-borrar aria-label="Borrar personaje">✕</button>
+      </div>` : "";
+    return `
+      <div class="tarjeta">
+        <div class="fila">
+          <span class="nombre">${esc(c.nombre)}</span>
+          <span class="hp">${c.hp}<small> / ${c.max}</small></span>
+        </div>
+        <div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div>
+        ${controles}
+      </div>`;
+  }).join("");
+}
+
+function vista() {
+  $("#zonaJugador").classList.toggle("oculto", esDJ);
+  $("#zonaAlta").classList.toggle("oculto", !esDJ);
+  if (esDJ) $("#zonaLogin").classList.add("oculto");
+  $("#modo").textContent = esDJ ? "Salir del modo DJ" : "Soy el DJ";
+  pintar();
+}
+
+/* ---------- Acciones ---------- */
+$("#nombre").value = localStorage.getItem("nombrePJ") || "";
+$("#nombre").addEventListener("input", e => {
+  try { localStorage.setItem("nombrePJ", e.target.value); } catch (_) {}
+  pintar();
+});
+
+$("#modo").onclick = () => {
+  if (esDJ) return almacen.salir();
+  $("#zonaLogin").classList.toggle("oculto");
+};
+
+$("#entrar").onclick = async () => {
+  $("#errorLogin").textContent = "";
+  try { await almacen.entrar($("#correo").value, $("#clave").value); }
+  catch (_) { $("#errorLogin").textContent = "Correo o contraseña incorrectos."; }
+};
+
+$("#zonaAlta").onsubmit = e => {
+  e.preventDefault();
+  if (Object.keys(personajes).length >= MAX_PERSONAJES) { alert("Ya hay 6 personajes."); return; }
+  const max = Math.max(1, parseInt($("#altaMax").value, 10) || 1);
+  almacen.guardar(Date.now().toString(36), { nombre: $("#altaNombre").value.trim(), hp: max, max });
+  e.target.reset();
+};
+
+$("#barras").onclick = e => {
+  const b = e.target.closest("button");
+  if (!b || !esDJ) return;
+  const id = b.dataset.id, c = personajes[id];
+  if ("borrar" in b.dataset) { if (confirm(`¿Borrar a ${c.nombre}?`)) almacen.borrar(id); return; }
+  const hp = Math.max(0, Math.min(c.max, c.hp + Number(b.dataset.d)));
+  almacen.guardar(id, { ...c, hp });
+};
+
+vista();
+</script>
+</body>
+</html>
