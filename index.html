@@ -30,6 +30,19 @@
   .enlace { background:none; color:var(--suave); text-decoration:underline; padding:8px 0; margin-top:16px; }
   .alta { display:grid; grid-template-columns:1fr 90px; gap:8px; }
   .alta button { grid-column:1/-1; background:#2f6b4f; }
+  .estados { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; }
+  .estado { background:#3a2f4d; border-radius:999px; padding:4px 12px; font-size:.9rem; }
+  .estado button, .inventario li button { background:none; padding:0 0 0 8px; color:var(--suave); }
+  .inventario { margin-top:14px; border-top:1px solid var(--linea); padding-top:10px; }
+  .inventario h3 { margin:0 0 6px; font-size:.85rem; font-weight:500; color:var(--suave); }
+  .inventario ul { margin:0; padding:0; }
+  .inventario li { list-style:none; display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px dashed var(--linea); }
+  .buscar { margin-top:14px; padding:12px; border-radius:8px; text-align:center; font-weight:800; background:#e0a030; color:#17252b; animation:brillo 1.1s infinite alternate; }
+  @keyframes brillo { from { box-shadow:0 0 0 0 rgba(224,160,48,0); } to { box-shadow:0 0 18px 4px rgba(224,160,48,.8); } }
+  @media (prefers-reduced-motion: reduce) { .buscar { animation:none; } }
+  .dj-extra { margin-top:14px; display:grid; gap:8px; }
+  .dj-extra form { display:flex; gap:6px; }
+  .dj-extra form input { margin:0; }
 </style>
 </head>
 <body>
@@ -78,6 +91,7 @@ const firebaseConfig = {
 
 const DEMO = firebaseConfig.apiKey === "PEGAR_AQUI";
 const MAX_PERSONAJES = 6;
+const MAX_OBJETOS = 7;
 const $ = s => document.querySelector(s);
 const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -139,6 +153,20 @@ function pintar() {
         ${[-5, -1, 1, 5].map(d => `<button data-id="${id}" data-d="${d}" aria-label="${d > 0 ? 'Curar' : 'Dañar'} ${Math.abs(d)}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}
         <button class="borrar" data-id="${id}" data-borrar aria-label="Borrar personaje">✕</button>
       </div>` : "";
+    const estados = c.estados || [];
+    const inv = c.inventario || [];
+    const quitar = (attr, i) => esDJ ? `<button data-id="${id}" ${attr}="${i}" aria-label="Quitar">✕</button>` : "";
+    const chips = estados.length
+      ? `<div class="estados">${estados.map((t, i) => `<span class="estado">${esc(t)}${quitar("data-quitar-estado", i)}</span>`).join("")}</div>` : "";
+    const aviso = (!esDJ && c.buscar) ? `<div class="buscar">🔍 ¡Puedes buscar!</div>` : "";
+    const lista = (esDJ || inv.length)
+      ? `<div class="inventario"><h3>Inventario (${inv.length}/${MAX_OBJETOS})</h3><ul>${inv.map((t, i) => `<li><span>${esc(t)}</span>${quitar("data-quitar-obj", i)}</li>`).join("")}</ul></div>` : "";
+    const extras = esDJ ? `
+      <div class="dj-extra">
+        <form data-form="estado" data-id="${id}"><input placeholder="Nuevo estado (ej. Envenenado)" required><button>+</button></form>
+        <form data-form="obj" data-id="${id}"><input placeholder="Nuevo objeto" required><button>+</button></form>
+        <button data-id="${id}" data-buscar>${c.buscar ? "Quitar aviso de búsqueda" : "🔍 Permitir buscar"}</button>
+      </div>` : "";
     return `
       <div class="tarjeta">
         <div class="fila">
@@ -146,7 +174,11 @@ function pintar() {
           <span class="hp">${c.hp}<small> / ${c.max}</small></span>
         </div>
         <div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div>
+        ${chips}
+        ${aviso}
+        ${lista}
         ${controles}
+        ${extras}
       </div>`;
   }).join("");
 }
@@ -187,12 +219,39 @@ $("#zonaAlta").onsubmit = e => {
 
 $("#barras").onclick = e => {
   const b = e.target.closest("button");
-  if (!b || !esDJ) return;
-  const id = b.dataset.id, c = personajes[id];
-  if ("borrar" in b.dataset) { if (confirm(`¿Borrar a ${c.nombre}?`)) almacen.borrar(id); return; }
-  const hp = Math.max(0, Math.min(c.max, c.hp + Number(b.dataset.d)));
-  almacen.guardar(id, { ...c, hp });
+  if (!b || !esDJ || !b.dataset.id) return;
+  const d = b.dataset, id = d.id, c = personajes[id];
+  if (!c) return;
+  if ("borrar" in d) { if (confirm(`¿Borrar a ${c.nombre}?`)) almacen.borrar(id); return; }
+  if ("quitarEstado" in d) {
+    const l = [...(c.estados || [])]; l.splice(Number(d.quitarEstado), 1);
+    almacen.guardar(id, { ...c, estados: l }); return;
+  }
+  if ("quitarObj" in d) {
+    const l = [...(c.inventario || [])]; l.splice(Number(d.quitarObj), 1);
+    almacen.guardar(id, { ...c, inventario: l }); return;
+  }
+  if ("buscar" in d) { almacen.guardar(id, { ...c, buscar: !c.buscar }); return; }
+  if ("d" in d) {
+    const hp = Math.max(0, Math.min(c.max, c.hp + Number(d.d)));
+    almacen.guardar(id, { ...c, hp });
+  }
 };
+
+$("#barras").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!esDJ) return;
+  const f = e.target, id = f.dataset.id, c = personajes[id];
+  const texto = f.querySelector("input").value.trim();
+  if (!c || !texto) return;
+  if (f.dataset.form === "estado") {
+    almacen.guardar(id, { ...c, estados: [...(c.estados || []), texto] });
+  } else {
+    const inv = c.inventario || [];
+    if (inv.length >= MAX_OBJETOS) { alert("El inventario está lleno (máximo 7)."); return; }
+    almacen.guardar(id, { ...c, inventario: [...inv, texto] });
+  }
+});
 
 vista();
 </script>
