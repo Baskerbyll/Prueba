@@ -43,6 +43,19 @@
   .dj-extra { margin-top:14px; display:grid; gap:8px; }
   .dj-extra form { display:flex; gap:6px; }
   .dj-extra form input { margin:0; }
+  .dj-extra form.col { flex-direction:column; }
+  .habs { display:flex; flex-wrap:wrap; gap:10px; margin:0 0 12px; }
+  .hab { width:62px; text-align:center; font-size:.7rem; color:var(--suave); }
+  .hab span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .circulo { width:52px; height:52px; margin:0 auto 4px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.1rem; color:var(--texto); background:#2f6b4f; border:2px solid #7fb069; box-shadow:0 0 12px rgba(127,176,105,.7); cursor:pointer; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; touch-action:manipulation; transition:opacity .3s; }
+  .circulo.espera { opacity:.35; box-shadow:none; font-size:.85rem; }
+  .vida { display:flex; align-items:center; gap:12px; }
+  .vida .barra { flex:1; }
+  .escudo { width:40px; height:46px; flex:none; }
+  .escudo path { fill:#33505a; stroke:var(--texto); stroke-width:2; }
+  .escudo text { fill:var(--texto); font-family:inherit; font-weight:800; font-size:18px; text-anchor:middle; }
+  #descripcion { position:fixed; left:12px; right:12px; bottom:16px; z-index:10; background:#0f1a1e; border:1px solid var(--texto); border-radius:12px; padding:14px 16px; }
+  #descripcion b { display:block; margin-bottom:4px; }
 </style>
 </head>
 <body>
@@ -73,6 +86,7 @@
 
   <button id="modo" class="enlace">Soy el DJ</button>
 </main>
+<div id="descripcion" class="oculto"></div>
 
 <script type="module">
 /* ============ 1. PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE ============ */
@@ -92,6 +106,7 @@ const firebaseConfig = {
 const DEMO = firebaseConfig.apiKey === "PEGAR_AQUI";
 const MAX_PERSONAJES = 6;
 const MAX_OBJETOS = 7;
+const MAX_HABILIDADES = 5;
 const $ = s => document.querySelector(s);
 const norm = t => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
 const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -99,6 +114,8 @@ const esc = t => t.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',
 let personajes = {};
 let esDJ = false;
 let almacen;
+let offsetReloj = 0;
+const ahora = () => Date.now() + offsetReloj;
 
 /* ---------- Almacén de datos: demo o Firebase ---------- */
 if (DEMO) {
@@ -109,22 +126,27 @@ if (DEMO) {
   almacen = {
     guardar: (id, d) => { personajes[id] = d; pintar(); },
     borrar: id => { delete personajes[id]; pintar(); },
+    actualizar: async () => alert("El modo demo no guarda estos cambios."),
+    usar: async () => alert("El modo demo no guarda estos cambios."),
     entrar: async () => { esDJ = true; vista(); },
     salir: async () => { esDJ = false; vista(); }
   };
 } else {
   const base = "https://www.gstatic.com/firebasejs/10.12.2/";
   const { initializeApp } = await import(base + "firebase-app.js");
-  const { getDatabase, ref, onValue, set, remove } = await import(base + "firebase-database.js");
+  const { getDatabase, ref, onValue, set, remove, update } = await import(base + "firebase-database.js");
   const { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } = await import(base + "firebase-auth.js");
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
   const auth = getAuth(app);
   onValue(ref(db, "personajes"), snap => { personajes = snap.val() || {}; pintar(); });
+  onValue(ref(db, ".info/serverTimeOffset"), s => { offsetReloj = s.val() || 0; });
   onAuthStateChanged(auth, u => { esDJ = !!u; vista(); });
   almacen = {
     guardar: (id, d) => set(ref(db, "personajes/" + id), d),
     borrar: id => remove(ref(db, "personajes/" + id)),
+    actualizar: (id, campos) => update(ref(db, "personajes/" + id), campos),
+    usar: (id, hab) => set(ref(db, `personajes/${id}/habilidades/${hab}/usadaEn`), ahora()),
     entrar: (c, p) => signInWithEmailAndPassword(auth, c, p),
     salir: () => signOut(auth)
   };
@@ -153,6 +175,9 @@ function pintar() {
         ${[-5, -1, 1, 5].map(d => `<button data-id="${id}" data-d="${d}" aria-label="${d > 0 ? 'Curar' : 'Dañar'} ${Math.abs(d)}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("")}
         <button class="borrar" data-id="${id}" data-borrar aria-label="Borrar personaje">✕</button>
       </div>` : "";
+    const habs = Object.entries(c.habilidades || {}).filter(([, h]) => h && h.nombre).sort(([a], [b]) => a < b ? -1 : 1);
+    const filaHabs = habs.length ? `<div class="habs">${habs.map(([hid, h]) => `<div class="hab"><div class="circulo" data-id="${id}" data-hab="${hid}"></div><span>${esc(h.nombre)}</span></div>`).join("")}</div>` : "";
+    const escudo = c.ca != null ? `<svg class="escudo" viewBox="0 0 40 46" role="img" aria-label="Clase de armadura ${Number(c.ca)}"><path d="M20 2 L37 8 V22 C37 33 29 41 20 44 C11 41 3 33 3 22 V8 Z"/><text x="20" y="29">${Number(c.ca)}</text></svg>` : "";
     const estados = c.estados || [];
     const inv = c.inventario || [];
     const quitar = (attr, i) => esDJ ? `<button data-id="${id}" ${attr}="${i}" aria-label="Quitar">✕</button>` : "";
@@ -165,6 +190,9 @@ function pintar() {
       <div class="dj-extra">
         <form data-form="estado" data-id="${id}"><input placeholder="Nuevo estado (ej. Envenenado)" required><button>+</button></form>
         <form data-form="obj" data-id="${id}"><input placeholder="Nuevo objeto" required><button>+</button></form>
+        <form data-form="ca" data-id="${id}"><input type="number" min="0" max="40" placeholder="CA (armadura)" value="${c.ca ?? ""}" required><button>OK</button></form>
+        <form class="col" data-form="hab" data-id="${id}"><input placeholder="Nueva habilidad" required><input type="number" min="0.1" step="any" placeholder="Enfriamiento (minutos)" required><input placeholder="Descripción"><button>Agregar habilidad</button></form>
+        ${habs.length ? `<div class="estados">${habs.map(([hid, h]) => `<span class="estado">${esc(h.nombre)} · ${Number(h.minutos)} min<button data-id="${id}" data-quitar-hab="${hid}" aria-label="Quitar habilidad">✕</button></span>`).join("")}</div>` : ""}
         <button data-id="${id}" data-buscar>${c.buscar ? "Quitar aviso de búsqueda" : "🔍 Permitir buscar"}</button>
       </div>` : "";
     return `
@@ -173,7 +201,8 @@ function pintar() {
           <span class="nombre">${esc(c.nombre)}</span>
           <span class="hp">${c.hp}<small> / ${c.max}</small></span>
         </div>
-        <div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div>
+        ${filaHabs}
+        <div class="vida"><div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div>${escudo}</div>
         ${chips}
         ${aviso}
         ${lista}
@@ -181,6 +210,7 @@ function pintar() {
         ${extras}
       </div>`;
   }).join("");
+  pintarCirculos();
 }
 
 function vista() {
@@ -225,16 +255,17 @@ $("#barras").onclick = e => {
   if ("borrar" in d) { if (confirm(`¿Borrar a ${c.nombre}?`)) almacen.borrar(id); return; }
   if ("quitarEstado" in d) {
     const l = [...(c.estados || [])]; l.splice(Number(d.quitarEstado), 1);
-    almacen.guardar(id, { ...c, estados: l }); return;
+    almacen.actualizar(id, { estados: l }); return;
   }
   if ("quitarObj" in d) {
     const l = [...(c.inventario || [])]; l.splice(Number(d.quitarObj), 1);
-    almacen.guardar(id, { ...c, inventario: l }); return;
+    almacen.actualizar(id, { inventario: l }); return;
   }
-  if ("buscar" in d) { almacen.guardar(id, { ...c, buscar: !c.buscar }); return; }
+  if ("quitarHab" in d) { almacen.actualizar(id, { ["habilidades/" + d.quitarHab]: null }); return; }
+  if ("buscar" in d) { almacen.actualizar(id, { buscar: !c.buscar }); return; }
   if ("d" in d) {
     const hp = Math.max(0, Math.min(c.max, c.hp + Number(d.d)));
-    almacen.guardar(id, { ...c, hp });
+    almacen.actualizar(id, { hp });
   }
 };
 
@@ -242,16 +273,64 @@ $("#barras").addEventListener("submit", e => {
   e.preventDefault();
   if (!esDJ) return;
   const f = e.target, id = f.dataset.id, c = personajes[id];
-  const texto = f.querySelector("input").value.trim();
-  if (!c || !texto) return;
-  if (f.dataset.form === "estado") {
-    almacen.guardar(id, { ...c, estados: [...(c.estados || []), texto] });
+  const v = [...f.querySelectorAll("input")].map(i => i.value.trim());
+  if (!c || !v[0]) return;
+  const tipo = f.dataset.form;
+  if (tipo === "estado") {
+    almacen.actualizar(id, { estados: [...(c.estados || []), v[0]] });
+  } else if (tipo === "ca") {
+    almacen.actualizar(id, { ca: Math.max(0, parseInt(v[0], 10) || 0) });
+  } else if (tipo === "hab") {
+    if (Object.keys(c.habilidades || {}).length >= MAX_HABILIDADES) { alert("Ya tiene 5 habilidades."); return; }
+    almacen.actualizar(id, { ["habilidades/" + Date.now().toString(36)]: { nombre: v[0], minutos: Math.max(0.1, Number(v[1]) || 5), desc: v[2] || "" } });
   } else {
     const inv = c.inventario || [];
     if (inv.length >= MAX_OBJETOS) { alert("El inventario está lleno (máximo 7)."); return; }
-    almacen.guardar(id, { ...c, inventario: [...inv, texto] });
+    almacen.actualizar(id, { inventario: [...inv, v[0]] });
   }
 });
+
+/* ---------- Habilidades: círculos, enfriamiento y descripción ---------- */
+function pintarCirculos() {
+  document.querySelectorAll(".circulo").forEach(el => {
+    const h = personajes[el.dataset.id]?.habilidades?.[el.dataset.hab];
+    if (!h) return;
+    const resta = h.usadaEn ? h.usadaEn + h.minutos * 60000 - ahora() : 0;
+    const espera = resta > 0;
+    const seg = Math.ceil(resta / 1000);
+    el.classList.toggle("espera", espera);
+    el.textContent = espera ? `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}` : h.nombre.trim().charAt(0).toUpperCase();
+  });
+}
+setInterval(pintarCirculos, 1000);
+
+let pulsacion = null, largo = false;
+const habDe = el => personajes[el.dataset.id]?.habilidades?.[el.dataset.hab];
+document.addEventListener("pointerdown", () => $("#descripcion").classList.add("oculto"));
+$("#barras").addEventListener("contextmenu", e => { if (e.target.closest(".circulo")) e.preventDefault(); });
+$("#barras").addEventListener("pointerdown", e => {
+  const el = e.target.closest(".circulo");
+  if (!el) return;
+  largo = false;
+  clearTimeout(pulsacion);
+  pulsacion = setTimeout(() => {
+    const h = habDe(el);
+    if (!h) return;
+    largo = true;
+    $("#descripcion").innerHTML = `<b>${esc(h.nombre)}</b>${esc(h.desc || "Sin descripción.")}`;
+    $("#descripcion").classList.remove("oculto");
+  }, 500);
+});
+["pointerup", "pointercancel"].forEach(tipo => $("#barras").addEventListener(tipo, e => {
+  clearTimeout(pulsacion);
+  const el = e.target.closest(".circulo");
+  if (tipo !== "pointerup" || !el || largo) return;
+  const h = habDe(el);
+  if (!h) return;
+  const enEspera = h.usadaEn && h.usadaEn + h.minutos * 60000 > ahora();
+  if (esDJ || enEspera) return;
+  Promise.resolve(almacen.usar(el.dataset.id, el.dataset.hab)).catch(() => alert("No se pudo usar la habilidad. Avisa al DJ."));
+}));
 
 vista();
 </script>
