@@ -106,6 +106,19 @@
   .dj-extra form.rej button { grid-column:1/-1; }
   .ch { font-size:.75rem; color:var(--suave); }
   #descripcion { max-height:50vh; overflow:auto; white-space:pre-wrap; }
+  .base { display:flex; align-items:center; gap:12px; margin-top:14px; }
+  .vela { display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation; }
+  .vela-ico { width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#ffb020; background:color-mix(in srgb, #ffb020 28%, #17252b); border:2px solid #ffb020; opacity:.4; transition:opacity .3s; }
+  .vela.encendida .vela-ico { opacity:1; box-shadow:0 0 14px #ffb020; }
+  .vela:not(.encendida) .llama { display:none; }
+  .vela-t { min-width:64px; padding:8px 10px; text-align:center; background:#0f1a1e; border:1px solid var(--linea); border-radius:8px; font-weight:800; }
+  .dinero { display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .dinero b { min-width:64px; padding:8px 10px; text-align:center; background:#0f1a1e; border:1px solid var(--linea); border-radius:8px; }
+  .papiro .usar { background:#5a3e1b; color:#f3e4b8; padding:3px 10px; border-radius:6px; font-size:.85rem; }
+  .fila2 { flex-wrap:wrap; }
+  .estbox { flex:1 1 140px; }
+  .atrfila button { padding:2px 10px; }
+  .confirmar { width:100%; margin-top:8px; background:#2f6b4f; }
 </style>
 </head>
 <body>
@@ -169,6 +182,7 @@ const NOMBRES_ATR = { fue: "Fuerza", des: "Destreza", con: "Constitución", int:
 const ATR_BASE = { fue: 10, des: 10, con: 10, int: 10, sab: 10, car: 10 };
 const mod = n => { const m = Math.floor((n - 10) / 2); return (m >= 0 ? "+" : "−") + Math.abs(m); };
 const abiertos = new Set();
+const pendientes = {};
 const NOMBRES_ICONO = { curacion: "Curación", accion: "Acción adicional", fisica: "Proeza física", mental: "Proeza mental" };
 const COLORES = { rojo: "#e5484d", naranja: "#f08a24", amarillo: "#e5c32e", verde: "#4caf6e", azul: "#3e8ef0", morado: "#8f6bf0", rosa: "#e86aa6", gris: "#9aa5a8" };
 const $ = s => document.querySelector(s);
@@ -192,6 +206,9 @@ if (DEMO) {
     borrar: id => { delete personajes[id]; pintar(); },
     actualizar: async () => alert("El modo demo no guarda estos cambios."),
     usar: async () => alert("El modo demo no guarda estos cambios."),
+    usarObjeto: async () => alert("El modo demo no guarda estos cambios."),
+    velaCambiar: async () => alert("El modo demo no guarda estos cambios."),
+    asignar: async () => alert("El modo demo no guarda estos cambios."),
     entrar: async () => { esDJ = true; vista(); },
     salir: async () => { esDJ = false; vista(); }
   };
@@ -211,6 +228,9 @@ if (DEMO) {
     borrar: id => remove(ref(db, "personajes/" + id)),
     actualizar: (id, campos) => update(ref(db, "personajes/" + id), campos),
     usar: (id, hab) => set(ref(db, `personajes/${id}/habilidades/${hab}/usadaEn`), ahora()),
+    usarObjeto: (id, i, n) => set(ref(db, `personajes/${id}/inventario/${i}/cantidad`), n),
+    velaCambiar: (id, campos) => update(ref(db, "personajes/" + id), campos),
+    asignar: (id, campos) => update(ref(db, "personajes/" + id), campos),
     entrar: (c, p) => signInWithEmailAndPassword(auth, c, p),
     salir: () => signOut(auth)
   };
@@ -242,13 +262,20 @@ function pintar() {
     const filaHabs = habs.length ? `<div class="habs">${habs.map(([hid, h]) => `<div class="hab"><div class="circulo" data-id="${id}" data-hab="${hid}" style="--c:${COLORES[h.color] || COLORES.verde}"></div><span>${esc(h.nombre)}</span></div>`).join("")}</div>` : "";
     const escudo = c.ca != null ? `<svg class="escudo" viewBox="0 0 40 46" role="img" aria-label="Clase de armadura ${Number(c.ca)}"><path d="M20 2 L37 8 V22 C37 33 29 41 20 44 C11 41 3 33 3 22 V8 Z"/><text x="20" y="29">${Number(c.ca)}</text></svg>` : "";
     const chips = (c.estados || []).map((t, i) => `<span class="estado">${esc(t)}${quitar("data-quitar-estado", i)}</span>`).join("");
-    const inv = (c.inventario || []).map(t => typeof t === "string" ? { nombre: t, cantidad: 1 } : t);
-    const filas = inv.map((o, i) => `<li><span>${esc(o.nombre)}</span><span class="cant${o.cantidad ? "" : " cero"}">${Number(o.cantidad) || 0}</span>${quitar("data-quitar-obj", i)}</li>`).join("");
+    const inv = (c.inventario || []).map(t => typeof t === "string" ? { nombre: t, cantidad: 1, legacy: true } : t);
+    const filas = inv.map((o, i) => `<li><span>${esc(o.nombre)}</span><span class="cant${o.cantidad ? "" : " cero"}">${Number(o.cantidad) || 0}</span>${!esDJ && !o.legacy && o.cantidad > 0 ? `<button class="usar" data-usar="${i}" data-id="${id}">usar</button>` : ""}${quitar("data-quitar-obj", i)}</li>`).join("");
     const papiro = (esDJ || inv.length) ? `<div class="papiro"><h3>Inventario (${inv.length}/${MAX_OBJETOS})</h3>${inv.length ? `<ul>${filas}</ul>` : `<p class="vacio">Vacío</p>`}</div>` : "";
     const aviso = (!esDJ && c.buscar) ? `<div class="buscar">🔍 ¡Puedes buscar!</div>` : "";
+    const velaHtml = c.vela ? `<div class="vela" data-id="${id}" role="button" aria-label="Vela"><div class="vela-ico"><svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path class="llama" d="M12 1c2.5 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 5.5 9.5 4 12 1z"/><rect x="9" y="11" width="6" height="11" rx="1.5"/></svg></div><div class="vela-t">0:00</div></div>` : "";
+    const dineroHtml = c.dinero != null ? `<div class="dinero"><svg viewBox="0 0 24 24" width="34" height="34" role="img" aria-label="Dinero"><circle cx="12" cy="12" r="10" fill="#e5c32e"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#a8861a" stroke-width="2"/></svg><b>${Number(c.dinero)}</b></div>` : "";
+    const base = (velaHtml || dineroHtml) ? `<div class="base">${velaHtml}${dineroHtml}</div>` : "";
     const resumen = ATR.map(([k, n]) => `<div>${n} ${mod(atr[k])}</div>`).join("");
-    const tabla = ATR.map(([k]) => `<div class="atrfila"><span>${NOMBRES_ATR[k]}</span><b>${atr[k]}</b><i>${mod(atr[k])}</i></div>`).join("");
-    const caracteristicas = `<details class="atr" data-id="${id}"${abiertos.has(id) ? " open" : ""}><summary><span class="punto${puntos ? " brilla" : ""}"></span><div class="resumen">${resumen}</div><div class="flecha"></div></summary>${tabla}${puntos ? `<p class="suave">Puntos por asignar: ${puntos}</p>` : ""}</details>`;
+    const pend = pendientes[id] || {};
+    const gastados = Object.values(pend).reduce((a, b) => a + b, 0);
+    const puedeAsignar = !esDJ && puntos > 0;
+    const btn = (k, paso, txt) => puedeAsignar ? `<button data-id="${id}" data-asig="${k}" data-sig="${paso}" aria-label="${paso > 0 ? "Sumar" : "Quitar"} punto">${txt}</button>` : "";
+    const tabla = ATR.map(([k]) => { const val = atr[k] + (pend[k] || 0); return `<div class="atrfila"><span>${NOMBRES_ATR[k]}</span>${btn(k, -1, "−")}<b>${val}</b>${btn(k, 1, "+")}<i>${mod(val)}</i></div>`; }).join("");
+    const caracteristicas = `<details class="atr" data-id="${id}"${abiertos.has(id) ? " open" : ""}><summary><span class="punto${puntos ? " brilla" : ""}"></span><div class="resumen">${resumen}</div><div class="flecha"></div></summary>${tabla}${puntos ? `<p class="suave">Puntos por asignar: ${puntos - gastados}</p>` : ""}${puedeAsignar && gastados > 0 ? `<button class="confirmar" data-id="${id}" data-confirmar>Confirmar</button>` : ""}</details>`;
     const botones = (attr, vals) => vals.map(d => `<button data-id="${id}" ${attr}="${d}" aria-label="${d > 0 ? "Sumar" : "Restar"} ${Math.abs(d)}">${d > 0 ? "+" : "−"}${Math.abs(d)}</button>`).join("");
     const controles = esDJ ? `
       <div class="botones"><span>HP</span>${botones("data-d", [-5, -1, 1, 5])}<button class="borrar" data-id="${id}" data-borrar aria-label="Borrar personaje">✕</button></div>
@@ -258,6 +285,7 @@ function pintar() {
         <form data-form="ajustes" data-id="${id}"><input type="number" min="1" placeholder="HP máx. (${c.max})"><input type="number" min="1" placeholder="XP máx. (${xpMax})"><input type="number" min="1" placeholder="Nivel (${nivel})"><button>OK</button></form>
         <form class="rej" data-form="atr" data-id="${id}">${ATR.map(([k, n]) => `<label class="ch">${n}<input type="number" min="1" max="30" value="${atr[k]}"></label>`).join("")}<button>Guardar características</button></form>
         <form class="col" data-form="historia" data-id="${id}"><textarea rows="3" placeholder="Raza e historia (se ve al mantener presionado el nombre)">${esc(c.historia || "")}</textarea><button>Guardar texto</button></form>
+        <form data-form="recursos" data-id="${id}"><input type="number" min="0" step="any" placeholder="Vela (minutos)"><input type="number" min="0" placeholder="Dinero (${c.dinero ?? "-"})"><button>OK</button></form>
         <form data-form="estado" data-id="${id}"><input placeholder="Nuevo estado (ej. Envenenado)" required><button>+</button></form>
         <form data-form="obj" data-id="${id}"><input placeholder="Nuevo objeto" required><input type="number" min="0" placeholder="Cant." value="1"><button>+</button></form>
         <form data-form="ca" data-id="${id}"><input type="number" min="0" max="40" placeholder="CA (armadura)" value="${c.ca ?? ""}" required><button>OK</button></form>
@@ -283,11 +311,13 @@ function pintar() {
         <div class="fila2">${caracteristicas}<div class="estbox"><h3>Estados</h3><div class="estados">${chips}</div></div></div>
         ${filaHabs}
         ${papiro}
+        ${base}
         ${controles}
         ${extras}
       </div>`;
   }).join("");
   pintarCirculos();
+  pintarVelas();
 }
 
 function vista() {
@@ -358,7 +388,7 @@ $("#barras").addEventListener("submit", e => {
   const f = e.target, id = f.dataset.id, c = personajes[id], tipo = f.dataset.form;
   const v = [...f.querySelectorAll("input, textarea")].map(i => i.value.trim());
   if (!c) return;
-  if (!v[0] && tipo !== "ajustes" && tipo !== "historia") return;
+  if (!v[0] && tipo !== "ajustes" && tipo !== "historia" && tipo !== "recursos") return;
   if (tipo === "estado") {
     almacen.actualizar(id, { estados: [...(c.estados || []), v[0]] });
   } else if (tipo === "ca") {
@@ -368,6 +398,11 @@ $("#barras").addEventListener("submit", e => {
     if (hpMax > 0) { campos.max = hpMax; if (c.hp > hpMax) campos.hp = hpMax; }
     if (xpMax > 0) campos.xpMax = xpMax;
     if (niv > 0) campos.nivel = niv;
+    if (Object.keys(campos).length) almacen.actualizar(id, campos);
+  } else if (tipo === "recursos") {
+    const campos = {}, min = parseFloat(v[0]), din = parseInt(v[1], 10);
+    if (min >= 0) campos.vela = { restante: Math.round(min * 60000) };
+    if (din >= 0) campos.dinero = din;
     if (Object.keys(campos).length) almacen.actualizar(id, campos);
   } else if (tipo === "atr") {
     const atr = {};
@@ -414,7 +449,65 @@ function pintarCirculos() {
     }
   });
 }
-setInterval(pintarCirculos, 1000);
+const velaResta = v => v.encendidaEn ? v.restante - (ahora() - v.encendidaEn) : v.restante;
+function pintarVelas() {
+  document.querySelectorAll(".vela").forEach(el => {
+    const v = personajes[el.dataset.id]?.vela;
+    if (!v) return;
+    const resta = velaResta(v);
+    const seg = Math.max(0, Math.ceil(resta / 1000));
+    el.classList.toggle("encendida", !!v.encendidaEn && resta > 0);
+    el.querySelector(".vela-t").textContent = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`;
+  });
+}
+setInterval(() => { pintarCirculos(); pintarVelas(); }, 1000);
+
+$("#barras").addEventListener("click", e => {
+  const a = e.target.closest("[data-asig]");
+  if (a && !esDJ) {
+    const id = a.dataset.id, k = a.dataset.asig, c = personajes[id];
+    if (!c) return;
+    const pend = pendientes[id] = pendientes[id] || {};
+    const gastados = Object.values(pend).reduce((x, y) => x + y, 0);
+    const base = { ...ATR_BASE, ...(c.atr || {}) }[k];
+    if (Number(a.dataset.sig) > 0) {
+      if (gastados < (c.puntos || 0) && base + (pend[k] || 0) < 20) pend[k] = (pend[k] || 0) + 1;
+    } else if ((pend[k] || 0) > 0) pend[k]--;
+    pintar();
+    return;
+  }
+  const ok = e.target.closest("[data-confirmar]");
+  if (ok && !esDJ) {
+    const id = ok.dataset.id, c = personajes[id], pend = pendientes[id] || {};
+    if (!c) return;
+    const atr = { ...ATR_BASE, ...(c.atr || {}) };
+    const campos = {};
+    let gastados = 0;
+    for (const k in pend) if (pend[k] > 0) { campos["atr/" + k] = atr[k] + pend[k]; gastados += pend[k]; }
+    if (!gastados || gastados > (c.puntos || 0)) return;
+    campos.puntos = c.puntos - gastados;
+    delete pendientes[id];
+    Promise.resolve(almacen.asignar(id, campos)).catch(() => alert("No se pudieron asignar los puntos. Avisa al DJ."));
+    pintar();
+    return;
+  }
+  const u = e.target.closest("[data-usar]");
+  if (u && !esDJ) {
+    const id = u.dataset.id, i = Number(u.dataset.usar), o = personajes[id]?.inventario?.[i];
+    if (o && typeof o === "object" && o.cantidad > 0) {
+      Promise.resolve(almacen.usarObjeto(id, i, o.cantidad - 1)).catch(() => alert("No se pudo usar el objeto. Avisa al DJ."));
+    }
+    return;
+  }
+  const el = e.target.closest(".vela");
+  if (!el) return;
+  const id = el.dataset.id, v = personajes[id]?.vela;
+  if (!v) return;
+  const resta = velaResta(v);
+  if (resta <= 0) return;
+  const campos = v.encendidaEn ? { "vela/restante": Math.round(resta), "vela/encendidaEn": null } : { "vela/encendidaEn": ahora() };
+  Promise.resolve(almacen.velaCambiar(id, campos)).catch(() => alert("No se pudo cambiar la vela. Avisa al DJ."));
+});
 
 let pulsacion = null, largo = false;
 const habDe = el => personajes[el.dataset.id]?.habilidades?.[el.dataset.hab];
