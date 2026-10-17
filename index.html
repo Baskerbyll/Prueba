@@ -4,16 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Barras de vida</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Cinzel:wght@500;700&family=Alegreya:wght@400;500;700&display=swap">
 <style>
-  :root { --fondo:#17252b; --tarjeta:#1f333b; --texto:#ece6d6; --suave:#9fb0b3; --linea:#33505a; }
+  :root { --fondo:#17110c; --tarjeta:#2b1f17; --texto:#efe3c4; --suave:#b5a583; --linea:#5a4630; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--fondo); color:var(--texto); font-family:'Fraunces',Georgia,serif; }
+  body { margin:0; background:var(--fondo); color:var(--texto); font-family:'Alegreya',Georgia,serif; }
   main { max-width:480px; margin:0 auto; padding:24px 16px 48px; }
   h1 { font-size:1.6rem; margin:0 0 20px; font-weight:800; }
   input, textarea, button { font:inherit; color:inherit; }
   input, textarea { width:100%; padding:12px 14px; background:var(--tarjeta); border:1px solid var(--linea); border-radius:8px; margin-bottom:12px; }
-  button { cursor:pointer; background:var(--linea); border:0; border-radius:8px; padding:10px 14px; }
+  button { cursor:pointer; background:linear-gradient(#6a5030,#473421); box-shadow:inset 0 0 0 1px #a98532, inset 0 1px 0 rgba(255,255,255,.18); border:0; border-radius:8px; padding:10px 14px; }
   button:focus-visible, input:focus-visible { outline:2px solid var(--texto); outline-offset:2px; }
   .oculto { display:none !important; }
   .tarjeta { background:var(--tarjeta); border-radius:12px; padding:16px; margin-bottom:14px; }
@@ -119,6 +119,67 @@
   .estbox { flex:1 1 140px; }
   .atrfila button { padding:2px 10px; }
   .confirmar { width:100%; margin-top:8px; background:#2f6b4f; }
+  .base { flex-wrap:wrap; }
+  .dinero button { padding:6px 12px; font-weight:800; }
+  .paso { background:var(--tarjeta); color:var(--texto); border:1px solid var(--linea); border-radius:8px; padding:6px; font:inherit; }
+  button.buscar { width:100%; border:0; cursor:pointer; }
+  #hallazgo, #botinVentana, #panel { position:fixed; inset:0; z-index:20; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,.6); padding:16px; }
+  .caja { width:100%; max-width:380px; max-height:90vh; overflow:auto; background:var(--tarjeta); border:1px solid var(--texto); border-radius:12px; padding:18px; text-align:center; }
+  .caja h2 { margin:0 0 12px; font-size:1.3rem; }
+  .caja button { width:100%; margin-top:8px; }
+  #aceptarHallazgo, #botinGuardar { background:#2f6b4f; }
+  .fila-botin { display:grid; grid-template-columns:1fr 80px; gap:6px; margin-bottom:6px; }
+  .fila-botin input { margin:0; }
+  .botin-fila { display:flex; gap:6px; }
+  .botin-fila button:first-child { flex:1; }
+  #panel .caja { text-align:left; }
+  #panel .dj-extra { margin-top:0; }
+  #panelCuerpo button { width:auto; margin-top:0; }
+  #panelCuerpo form.col > button { width:100%; }
+  .paneles { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; margin-top:14px; }
+  .sel { width:100%; background:var(--tarjeta); color:var(--texto); border:1px solid var(--linea); border-radius:8px; padding:10px; font:inherit; }
+  .equipo { margin-top:12px; background:#0f1a1e; border:1px solid var(--linea); border-radius:8px; padding:8px 10px; }
+  .equipo h3 { margin:0 0 4px; font-size:.8rem; font-weight:500; color:var(--suave); }
+  .arma { display:flex; gap:8px; align-items:baseline; padding:5px 0; border-top:1px solid var(--linea); }
+  .arma span { flex:1; }
+  .arma b { white-space:nowrap; }
+  .arma small { color:var(--suave); }
+  button.buscar { display:flex; align-items:center; justify-content:center; gap:8px; }
+
+  /* ===== Tema medieval: solo estilo, nada cambia de lugar ===== */
+  body { background:radial-gradient(ellipse at 50% -10%, #3d2b1c 0%, #1a120d 58%, #0f0a07 100%) fixed; }
+  body::before { content:""; position:fixed; inset:0; z-index:-1; pointer-events:none; opacity:.22; mix-blend-mode:overlay; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+  h1 { font-family:'Cinzel Decorative','Cinzel',Georgia,serif; font-weight:700; letter-spacing:.06em; color:#e8c872; text-shadow:0 2px 0 #000, 0 0 14px rgba(201,162,74,.35); background:linear-gradient(90deg,#c9a24a,transparent) bottom / 100% 1px no-repeat; }
+  .tarjeta { position:relative; border-radius:6px; background:
+      radial-gradient(circle at 9px 9px, #c9a24a 0 2.5px, transparent 3.2px),
+      radial-gradient(circle at calc(100% - 9px) 9px, #c9a24a 0 2.5px, transparent 3.2px),
+      radial-gradient(circle at 9px calc(100% - 9px), #c9a24a 0 2.5px, transparent 3.2px),
+      radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #c9a24a 0 2.5px, transparent 3.2px),
+      linear-gradient(160deg, #3a2a1d, #261a12);
+    box-shadow:inset 0 0 0 1px #a98532, inset 0 0 0 4px #261a12, inset 0 0 0 5px rgba(201,162,74,.45), 0 8px 20px rgba(0,0,0,.55); }
+  .nombre-pj { font-family:'Cinzel Decorative','Cinzel',Georgia,serif; font-weight:700; letter-spacing:.04em; color:#e8c872; text-shadow:0 2px 0 #000, 0 0 12px rgba(201,162,74,.35); }
+  .nivel { font-family:'Cinzel',Georgia,serif; color:#e8c872; background:radial-gradient(circle at 50% 30%, #4d3825, #2a1d14); border-color:#c9a24a; box-shadow:inset 0 0 0 3px #1a120d, inset 0 0 0 4px rgba(201,162,74,.55); }
+  .barra { background:#120c08; border-radius:4px; box-shadow:inset 0 2px 5px #000, 0 0 0 1px #8a6a2e; }
+  .barra i { position:relative; }
+  .barra i::after { content:""; position:absolute; inset:0; background:linear-gradient(rgba(255,255,255,.3), transparent 55%); }
+  .escudo path { fill:#51473d; stroke:#c9a24a; }
+  .escudo text { fill:#f3e6bf; font-family:'Cinzel',Georgia,serif; }
+  .atr, .estbox, .equipo, .vela-t, .dinero b { background:#17100b; border-color:#5a4630; box-shadow:inset 0 0 0 1px rgba(201,162,74,.18); }
+  h3, .caja h2 { font-family:'Cinzel',Georgia,serif; letter-spacing:.08em; }
+  .estbox h3, .equipo h3 { color:#c9a24a; }
+  .estado { background:#4a2b35; box-shadow:inset 0 0 0 1px #8a4a5a; }
+  .circulo { background:color-mix(in srgb, var(--c,#7fb069) 30%, #17100b); box-shadow:0 0 12px var(--c,#7fb069), inset 0 0 0 3px #17100b, inset 0 0 0 4px rgba(239,227,196,.4); }
+  .circulo.espera { box-shadow:inset 0 0 0 3px #17100b, inset 0 0 0 4px rgba(239,227,196,.3); }
+  .vela-ico { background:color-mix(in srgb, #ffb020 30%, #17100b); box-shadow:inset 0 0 0 3px #17100b, inset 0 0 0 4px rgba(255,176,32,.4); }
+  .vela.encendida .vela-ico { box-shadow:0 0 16px #ffb020, inset 0 0 0 3px #17100b, inset 0 0 0 4px rgba(255,176,32,.6); }
+  .buscar { background:linear-gradient(#f4c95d,#c58a1c); color:#2a1a08; }
+  .papiro { border:1px solid #8a6a2e; }
+  .papiro h3, .cant { font-family:'Cinzel',Georgia,serif; }
+  .caja, #descripcion { background:linear-gradient(160deg,#3a2a1d,#261a12); border-color:#c9a24a; box-shadow:inset 0 0 0 3px #261a12, inset 0 0 0 4px rgba(201,162,74,.45), 0 10px 30px rgba(0,0,0,.6); }
+  input, textarea, .sel, .paso { background:#17100b; border-color:#5a4630; }
+  .alta button, .confirmar, #aceptarHallazgo, #botinGuardar { background:linear-gradient(#4d7a36,#31521f); }
+  .botones .borrar { background:linear-gradient(#7a2c35,#4d1a21); }
+  .estado button, .papiro button { box-shadow:none; }
 </style>
 </head>
 <body>
@@ -150,6 +211,9 @@
   <button id="modo" class="enlace">Soy el DJ</button>
 </main>
 <div id="descripcion" class="oculto"></div>
+<div id="hallazgo" class="oculto"><div class="caja"><p>Encontraste</p><h2 id="hallazgoNombre"></h2><button id="aceptarHallazgo">Aceptar</button></div></div>
+<div id="panel" class="oculto"><div class="caja"><h2 id="panelTitulo"></h2><div id="panelCuerpo"></div><button id="panelCerrar">Cerrar</button></div></div>
+<div id="botinVentana" class="oculto"><div class="caja"><h2 id="botinTitulo">Objetos de la búsqueda</h2><div id="botinFilas"></div><button id="botinGuardar">Guardar</button><button id="botinCerrar">Cerrar</button></div></div>
 
 <script type="module">
 /* ============ 1. PEGA AQUÍ TU CONFIGURACIÓN DE FIREBASE ============ */
@@ -170,6 +234,9 @@ const DEMO = firebaseConfig.apiKey === "PEGAR_AQUI";
 const MAX_PERSONAJES = 6;
 const MAX_OBJETOS = 7;
 const MAX_HABILIDADES = 5;
+const MAX_EQUIPO = 6;
+const DADOS = ["d4", "d6", "d8", "d10", "d12", "d20"];
+const COFRE = `<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M3 10c0-3.5 3-6 9-6s9 2.5 9 6z"/><rect x="3" y="11" width="18" height="9" rx="1.5"/><rect x="10.5" y="9" width="3" height="5" rx=".8" fill="#17252b"/></svg>`;
 const svg = d => `<svg viewBox="0 0 24 24" fill="currentColor" width="26" height="26" aria-hidden="true">${d}</svg>`;
 const ICONOS = {
   curacion: svg('<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>'),
@@ -183,6 +250,8 @@ const ATR_BASE = { fue: 10, des: 10, con: 10, int: 10, sab: 10, car: 10 };
 const mod = n => { const m = Math.floor((n - 10) / 2); return (m >= 0 ? "+" : "−") + Math.abs(m); };
 const abiertos = new Set();
 const pendientes = {};
+let pasoDinero = 1;
+const formularios = {};
 const NOMBRES_ICONO = { curacion: "Curación", accion: "Acción adicional", fisica: "Proeza física", mental: "Proeza mental" };
 const COLORES = { rojo: "#e5484d", naranja: "#f08a24", amarillo: "#e5c32e", verde: "#4caf6e", azul: "#3e8ef0", morado: "#8f6bf0", rosa: "#e86aa6", gris: "#9aa5a8" };
 const $ = s => document.querySelector(s);
@@ -207,6 +276,8 @@ if (DEMO) {
     actualizar: async () => alert("El modo demo no guarda estos cambios."),
     usar: async () => alert("El modo demo no guarda estos cambios."),
     usarObjeto: async () => alert("El modo demo no guarda estos cambios."),
+    buscarObjeto: async () => alert("El modo demo no guarda estos cambios."),
+    aceptarHallazgo: async () => alert("El modo demo no guarda estos cambios."),
     velaCambiar: async () => alert("El modo demo no guarda estos cambios."),
     asignar: async () => alert("El modo demo no guarda estos cambios."),
     entrar: async () => { esDJ = true; vista(); },
@@ -228,7 +299,9 @@ if (DEMO) {
     borrar: id => remove(ref(db, "personajes/" + id)),
     actualizar: (id, campos) => update(ref(db, "personajes/" + id), campos),
     usar: (id, hab) => set(ref(db, `personajes/${id}/habilidades/${hab}/usadaEn`), ahora()),
-    usarObjeto: (id, i, n) => set(ref(db, `personajes/${id}/inventario/${i}/cantidad`), n),
+    usarObjeto: (id, k, n) => n > 0 ? set(ref(db, `personajes/${id}/inventario/${k}/cantidad`), n) : remove(ref(db, `personajes/${id}/inventario/${k}`)),
+    buscarObjeto: (id, clave) => set(ref(db, `personajes/${id}/hallazgo`), clave),
+    aceptarHallazgo: (id, clave, o) => update(ref(db, "personajes/" + id), { ["inventario/" + clave]: o, hallazgo: null, buscar: null }),
     velaCambiar: (id, campos) => update(ref(db, "personajes/" + id), campos),
     asignar: (id, campos) => update(ref(db, "personajes/" + id), campos),
     entrar: (c, p) => signInWithEmailAndPassword(auth, c, p),
@@ -237,7 +310,7 @@ if (DEMO) {
 }
 
 /* ---------- Dibujo ---------- */
-function colorBarra(p) { return p > 50 ? "#7fb069" : p > 25 ? "#e0a030" : "#d64545"; }
+function colorBarra(p) { return p > 50 ? "#6f9a4a" : p > 25 ? "#d99a2b" : "#b3303a"; }
 
 function pintar() {
   const todos = Object.entries(personajes);
@@ -257,17 +330,19 @@ function pintar() {
     const atr = { ...ATR_BASE, ...(c.atr || {}) };
     const p = Math.max(0, Math.min(100, c.hp / c.max * 100));
     const px = Math.max(0, Math.min(100, xp / xpMax * 100));
-    const quitar = (attr, i) => esDJ ? `<button data-id="${id}" ${attr}="${i}" aria-label="Quitar">✕</button>` : "";
+    const quitar = (attr, k) => esDJ ? `<button data-id="${id}" ${attr}="${k}" aria-label="Quitar">✕</button>` : "";
+    const dj = html => esDJ ? `<div class="dj-extra">${html}</div>` : "";
     const habs = Object.entries(c.habilidades || {}).filter(([, h]) => h && h.nombre).sort(([a], [b]) => a < b ? -1 : 1);
     const filaHabs = habs.length ? `<div class="habs">${habs.map(([hid, h]) => `<div class="hab"><div class="circulo" data-id="${id}" data-hab="${hid}" style="--c:${COLORES[h.color] || COLORES.verde}"></div><span>${esc(h.nombre)}</span></div>`).join("")}</div>` : "";
     const escudo = c.ca != null ? `<svg class="escudo" viewBox="0 0 40 46" role="img" aria-label="Clase de armadura ${Number(c.ca)}"><path d="M20 2 L37 8 V22 C37 33 29 41 20 44 C11 41 3 33 3 22 V8 Z"/><text x="20" y="29">${Number(c.ca)}</text></svg>` : "";
     const chips = (c.estados || []).map((t, i) => `<span class="estado">${esc(t)}${quitar("data-quitar-estado", i)}</span>`).join("");
-    const inv = (c.inventario || []).map(t => typeof t === "string" ? { nombre: t, cantidad: 1, legacy: true } : t);
-    const filas = inv.map((o, i) => `<li><span>${esc(o.nombre)}</span><span class="cant${o.cantidad ? "" : " cero"}">${Number(o.cantidad) || 0}</span>${!esDJ && !o.legacy && o.cantidad > 0 ? `<button class="usar" data-usar="${i}" data-id="${id}">usar</button>` : ""}${quitar("data-quitar-obj", i)}</li>`).join("");
+    const inv = Object.entries(c.inventario || {}).map(([k, t]) => typeof t === "string" ? { k, nombre: t, cantidad: 1, legacy: true } : { k, ...t });
+    const filas = inv.map(o => `<li><span>${esc(o.nombre)}</span><span class="cant">${Number(o.cantidad) || 0}</span>${!esDJ && !o.legacy && o.cantidad > 0 ? `<button class="usar" data-usar="${o.k}" data-id="${id}">usar</button>` : ""}${quitar("data-quitar-obj", o.k)}</li>`).join("");
     const papiro = (esDJ || inv.length) ? `<div class="papiro"><h3>Inventario (${inv.length}/${MAX_OBJETOS})</h3>${inv.length ? `<ul>${filas}</ul>` : `<p class="vacio">Vacío</p>`}</div>` : "";
-    const aviso = (!esDJ && c.buscar) ? `<div class="buscar">🔍 ¡Puedes buscar!</div>` : "";
+    const aviso = (!esDJ && c.buscar && !c.hallazgo) ? `<button class="buscar" data-id="${id}" data-buscar-obj>${COFRE} Abrir</button>` : "";
     const velaHtml = c.vela ? `<div class="vela" data-id="${id}" role="button" aria-label="Vela"><div class="vela-ico"><svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28" aria-hidden="true"><path class="llama" d="M12 1c2.5 3 3.5 4.5 3.5 6.5a3.5 3.5 0 0 1-7 0C8.5 5.5 9.5 4 12 1z"/><rect x="9" y="11" width="6" height="11" rx="1.5"/></svg></div><div class="vela-t">0:00</div></div>` : "";
-    const dineroHtml = c.dinero != null ? `<div class="dinero"><svg viewBox="0 0 24 24" width="34" height="34" role="img" aria-label="Dinero"><circle cx="12" cy="12" r="10" fill="#e5c32e"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#a8861a" stroke-width="2"/></svg><b>${Number(c.dinero)}</b></div>` : "";
+    const monedas = Number(c.dinero) || 0;
+    const dineroHtml = (c.dinero != null || esDJ) ? `<div class="dinero">${esDJ ? `<select class="paso" aria-label="Monto por toque">${[1, 5, 10, 50, 100].map(n => `<option value="${n}"${n === pasoDinero ? " selected" : ""}>${n}</option>`).join("")}</select><button data-id="${id}" data-dinero="-1" aria-label="Restar dinero">−</button>` : ""}<svg viewBox="0 0 24 24" width="34" height="34" role="img" aria-label="Dinero"><circle cx="12" cy="12" r="10" fill="#e5c32e"/><circle cx="12" cy="12" r="6.5" fill="none" stroke="#a8861a" stroke-width="2"/></svg><b>${monedas}</b>${esDJ ? `<button data-id="${id}" data-dinero="1" aria-label="Sumar dinero">+</button>` : ""}</div>` : "";
     const base = (velaHtml || dineroHtml) ? `<div class="base">${velaHtml}${dineroHtml}</div>` : "";
     const resumen = ATR.map(([k, n]) => `<div>${n} ${mod(atr[k])}</div>`).join("");
     const pend = pendientes[id] || {};
@@ -280,44 +355,44 @@ function pintar() {
     const controles = esDJ ? `
       <div class="botones"><span>HP</span>${botones("data-d", [-5, -1, 1, 5])}<button class="borrar" data-id="${id}" data-borrar aria-label="Borrar personaje">✕</button></div>
       <div class="botones"><span>XP</span>${botones("data-xp", [-5, -1, 1, 5])}</div>` : "";
-    const extras = esDJ ? `
-      <div class="dj-extra">
-        <form data-form="ajustes" data-id="${id}"><input type="number" min="1" placeholder="HP máx. (${c.max})"><input type="number" min="1" placeholder="XP máx. (${xpMax})"><input type="number" min="1" placeholder="Nivel (${nivel})"><button>OK</button></form>
-        <form class="rej" data-form="atr" data-id="${id}">${ATR.map(([k, n]) => `<label class="ch">${n}<input type="number" min="1" max="30" value="${atr[k]}"></label>`).join("")}<button>Guardar características</button></form>
-        <form class="col" data-form="historia" data-id="${id}"><textarea rows="3" placeholder="Raza e historia (se ve al mantener presionado el nombre)">${esc(c.historia || "")}</textarea><button>Guardar texto</button></form>
-        <form data-form="recursos" data-id="${id}"><input type="number" min="0" step="any" placeholder="Vela (minutos)"><input type="number" min="0" placeholder="Dinero (${c.dinero ?? "-"})"><button>OK</button></form>
-        <form data-form="estado" data-id="${id}"><input placeholder="Nuevo estado (ej. Envenenado)" required><button>+</button></form>
-        <form data-form="obj" data-id="${id}"><input placeholder="Nuevo objeto" required><input type="number" min="0" placeholder="Cant." value="1"><button>+</button></form>
-        <form data-form="ca" data-id="${id}"><input type="number" min="0" max="40" placeholder="CA (armadura)" value="${c.ca ?? ""}" required><button>OK</button></form>
-        <form class="col" data-form="hab" data-id="${id}"><input placeholder="Nueva habilidad" required><input type="number" min="0.1" step="any" placeholder="Enfriamiento (minutos)" required><input placeholder="Descripción">
+    const armas = Object.entries(c.equipo || {}).filter(([, a]) => a && a.nombre).sort(([a], [b]) => a < b ? -1 : 1);
+    const danio = a => { const m = a.car ? Math.floor((atr[a.car] - 10) / 2) : 0; return a.dado + (a.car ? (m >= 0 ? " + " : " − ") + Math.abs(m) : ""); };
+    const equipoJ = armas.length ? `<div class="equipo"><h3>Equipo</h3>${armas.map(([, a]) => `<div class="arma"><span>${esc(a.nombre)}</span><b>${esc(danio(a))}</b>${a.car ? `<small>${a.car.toUpperCase()}</small>` : ""}</div>`).join("")}</div>` : "";
+    const equipoDM = armas.length ? `<div class="equipo"><h3>Equipo</h3>${armas.map(([, a]) => `<div class="arma"><span>${esc(a.nombre)}</span></div>`).join("")}</div>` : "";
+    const fEq = dj(`<form class="col" data-form="equipo" data-id="${id}"><input placeholder="Nombre del arma o equipo" required><label class="ch">Dado de daño<select class="sel" name="dado">${DADOS.map(d => `<option value="${d}">${d}</option>`).join("")}</select></label><label class="ch">Modificador que se suma<select class="sel" name="car"><option value="">Ninguno</option>${ATR.map(([k]) => `<option value="${k}">${NOMBRES_ATR[k]}</option>`).join("")}</select></label><button>Agregar equipo</button></form>${armas.length ? `<div class="estados">${armas.map(([k, a]) => `<span class="estado">${esc(a.nombre)} · ${esc(a.dado)}<button data-id="${id}" data-quitar-eq="${k}" aria-label="Quitar equipo">✕</button></span>`).join("")}</div>` : ""}`);
+    const nombreHtml = `<div class="nombre-pj${c.historia ? " tiene" : ""}" data-id="${id}">${esc(c.nombre)}</div>`;
+    const cabecera = `
+      <div class="cabecera">
+        <div class="nivel" aria-label="Nivel ${nivel}"><small>Nivel</small>${nivel}</div>
+        <div class="barras2">
+          <div class="vida"><div class="barra"><i style="width:${px}%;background:#ffd400"></i></div><span class="num">${xp}/${xpMax} XP</span></div>
+          <div class="vida"><div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div><span class="num">${c.hp}/${c.max} HP</span></div>
+        </div>
+        ${escudo}
+      </div>`;
+    const fila2 = `<div class="fila2">${caracteristicas}<div class="estbox"><h3>Estados</h3><div class="estados">${chips}</div></div></div>`;
+    const fHist = dj(`<form class="col" data-form="historia" data-id="${id}"><textarea rows="3" placeholder="Raza e historia (se ve al mantener presionado el nombre)">${esc(c.historia || "")}</textarea><button>Guardar texto</button></form>`);
+    const fAjustes = dj(`<form data-form="ajustes" data-id="${id}"><input type="number" min="1" placeholder="HP máx. (${c.max})"><input type="number" min="1" placeholder="XP máx. (${xpMax})"><input type="number" min="1" placeholder="Nivel (${nivel})"><button>OK</button></form>
+        <form data-form="ca" data-id="${id}"><input type="number" min="0" max="40" placeholder="CA (armadura)" value="${c.ca ?? ""}" required><button>OK</button></form>`);
+    const fCar = dj(`<form class="rej" data-form="atr" data-id="${id}">${ATR.map(([k, n]) => `<label class="ch">${n}<input type="number" min="1" max="30" value="${atr[k]}"></label>`).join("")}<button>Guardar características</button></form>`);
+    const fEst = dj(`<form data-form="estado" data-id="${id}"><input placeholder="Nuevo estado (ej. Envenenado)" required><button>+</button></form>`);
+    const fRec = dj(`<form data-form="recursos" data-id="${id}"><input type="number" min="0" step="any" placeholder="Vela (minutos)"><input type="number" min="0" placeholder="Dinero (${c.dinero ?? "-"})"><button>OK</button></form>`);
+    const fHab = dj(`<form class="col" data-form="hab" data-id="${id}"><input placeholder="Nueva habilidad" required><input type="number" min="0.1" step="any" placeholder="Enfriamiento (minutos)" required><input placeholder="Descripción">
           <div class="paleta">${Object.entries(COLORES).map(([k, hex]) => `<label><input type="radio" name="color" value="${k}"${k === "verde" ? " checked" : ""}><span style="background:${hex}" title="${k}"></span></label>`).join("")}</div>
           <div class="paleta"><label><input type="radio" name="icono" value="" checked><span title="Sin ícono (inicial)">Aa</span></label>${Object.entries(NOMBRES_ICONO).map(([k, n]) => `<label><input type="radio" name="icono" value="${k}"><span title="${n}">${ICONOS[k]}</span></label>`).join("")}</div>
           <button>Agregar habilidad</button></form>
-        ${habs.length ? `<div class="estados">${habs.map(([hid, h]) => `<span class="estado">${esc(h.nombre)} · ${Number(h.minutos)} min<button data-id="${id}" data-quitar-hab="${hid}" aria-label="Quitar habilidad">✕</button></span>`).join("")}</div>` : ""}
-        <button data-id="${id}" data-buscar>${c.buscar ? "Quitar aviso de búsqueda" : "🔍 Permitir buscar"}</button>
-      </div>` : "";
-    return `
-      <div class="tarjeta">
-        <div class="nombre-pj${c.historia ? " tiene" : ""}" data-id="${id}">${esc(c.nombre)}</div>
-        ${aviso}
-        <div class="cabecera">
-          <div class="nivel" aria-label="Nivel ${nivel}"><small>Nivel</small>${nivel}</div>
-          <div class="barras2">
-            <div class="vida"><div class="barra"><i style="width:${px}%;background:#ffd400"></i></div><span class="num">${xp}/${xpMax} XP</span></div>
-            <div class="vida"><div class="barra"><i style="width:${p}%;background:${colorBarra(p)}"></i></div><span class="num">${c.hp}/${c.max} HP</span></div>
-          </div>
-          ${escudo}
-        </div>
-        <div class="fila2">${caracteristicas}<div class="estbox"><h3>Estados</h3><div class="estados">${chips}</div></div></div>
-        ${filaHabs}
-        ${papiro}
-        ${base}
-        ${controles}
-        ${extras}
-      </div>`;
+        ${habs.length ? `<div class="estados">${habs.map(([hid, h]) => `<span class="estado">${esc(h.nombre)} · ${Number(h.minutos)} min<button data-id="${id}" data-quitar-hab="${hid}" aria-label="Quitar habilidad">✕</button></span>`).join("")}</div>` : ""}`);
+    const fBuscar = dj(`<div class="botin-fila"><button data-id="${id}" data-buscar>${c.buscar ? "Quitar cofre" : "Mostrar cofre"}</button><button data-id="${id}" data-botin aria-label="Objetos de la búsqueda">+</button></div>`);
+    if (esDJ) formularios[id] = { historia: fHist, ajustes: fAjustes, caracteristicas: fCar, estados: fEst, vela: fRec, habilidades: fHab, equipo: fEq };
+    const paneles = esDJ ? `<div class="paneles">${[["historia", "Historia"], ["ajustes", "Ajustes"], ["estados", "Estados"], ["vela", "Vela y dinero"], ["habilidades", "Habilidades"], ["equipo", "Equipo"], ["caracteristicas", "Características"]].map(([sec, t]) => `<button data-id="${id}" data-panel="${sec}">${t}</button>`).join("")}</div>` : "";
+    return `<div class="tarjeta">${esDJ
+      ? nombreHtml + cabecera + controles + fila2 + base + filaHabs + equipoDM + papiro + fBuscar + paneles
+      : nombreHtml + aviso + cabecera + fila2 + filaHabs + equipoJ + papiro + base}</div>`;
   }).join("");
   pintarCirculos();
   pintarVelas();
+  pintarHallazgo(visibles);
+  refrescarPanel();
 }
 
 function vista() {
@@ -354,7 +429,7 @@ $("#zonaAlta").onsubmit = e => {
   e.target.reset();
 };
 
-$("#barras").onclick = e => {
+const clickDJ = e => {
   const b = e.target.closest("button");
   if (!b || !esDJ || !b.dataset.id) return;
   const d = b.dataset, id = d.id, c = personajes[id];
@@ -364,12 +439,16 @@ $("#barras").onclick = e => {
     const l = [...(c.estados || [])]; l.splice(Number(d.quitarEstado), 1);
     almacen.actualizar(id, { estados: l }); return;
   }
-  if ("quitarObj" in d) {
-    const l = [...(c.inventario || [])]; l.splice(Number(d.quitarObj), 1);
-    almacen.actualizar(id, { inventario: l }); return;
-  }
+  if ("quitarObj" in d) { almacen.actualizar(id, { ["inventario/" + d.quitarObj]: null }); return; }
   if ("quitarHab" in d) { almacen.actualizar(id, { ["habilidades/" + d.quitarHab]: null }); return; }
-  if ("buscar" in d) { almacen.actualizar(id, { buscar: !c.buscar }); return; }
+  if ("buscar" in d) { almacen.actualizar(id, { buscar: !c.buscar, hallazgo: null }); return; }
+  if ("quitarEq" in d) { almacen.actualizar(id, { ["equipo/" + d.quitarEq]: null }); return; }
+  if ("panel" in d) { abrirPanel(id, d.panel); return; }
+  if ("botin" in d) { abrirBotin(id); return; }
+  if ("dinero" in d) {
+    almacen.actualizar(id, { dinero: Math.max(0, (Number(c.dinero) || 0) + Number(d.dinero) * pasoDinero) });
+    return;
+  }
   if ("xp" in d) {
     let xp = (c.xp || 0) + Number(d.xp), nivel = c.nivel || 1, puntos = c.puntos || 0;
     const tope = c.xpMax || 20;
@@ -381,9 +460,12 @@ $("#barras").onclick = e => {
     almacen.actualizar(id, { hp });
   }
 };
+$("#barras").onclick = clickDJ;
+$("#panelCuerpo").onclick = clickDJ;
 
-$("#barras").addEventListener("submit", e => {
+$("#panelCuerpo").addEventListener("submit", e => {
   e.preventDefault();
+  document.activeElement?.blur?.();
   if (!esDJ) return;
   const f = e.target, id = f.dataset.id, c = personajes[id], tipo = f.dataset.form;
   const v = [...f.querySelectorAll("input, textarea")].map(i => i.value.trim());
@@ -410,6 +492,9 @@ $("#barras").addEventListener("submit", e => {
     almacen.actualizar(id, { atr });
   } else if (tipo === "historia") {
     almacen.actualizar(id, { historia: v[0] || null });
+  } else if (tipo === "equipo") {
+    if (Object.keys(c.equipo || {}).length >= MAX_EQUIPO) { alert("Ya tiene 6 equipos."); return; }
+    almacen.actualizar(id, { ["equipo/" + Date.now().toString(36)]: { nombre: v[0], dado: f.querySelector('select[name="dado"]').value, car: f.querySelector('select[name="car"]').value } });
   } else if (tipo === "hab") {
     if (Object.keys(c.habilidades || {}).length >= MAX_HABILIDADES) { alert("Ya tiene 5 habilidades."); return; }
     almacen.actualizar(id, { ["habilidades/" + Date.now().toString(36)]: {
@@ -423,6 +508,10 @@ $("#barras").addEventListener("submit", e => {
     const q = parseInt(v[1], 10);
     almacen.actualizar(id, { inventario: [...inv, { nombre: v[0], cantidad: Number.isNaN(q) ? 1 : Math.max(0, q) }] });
   }
+});
+
+$("#barras").addEventListener("change", e => {
+  if (e.target.classList.contains("paso")) pasoDinero = Number(e.target.value);
 });
 
 $("#barras").addEventListener("toggle", e => {
@@ -460,6 +549,59 @@ function pintarVelas() {
     el.querySelector(".vela-t").textContent = `${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, "0")}`;
   });
 }
+let panelActual = null;
+const TITULOS = { historia: "Raza e historia", ajustes: "Ajustes", estados: "Estados", vela: "Vela y dinero", habilidades: "Habilidades", equipo: "Equipo", caracteristicas: "Características" };
+function abrirPanel(id, sec) {
+  panelActual = { id, sec };
+  $("#panelTitulo").textContent = `${TITULOS[sec]} · ${personajes[id].nombre}`;
+  $("#panelCuerpo").innerHTML = formularios[id]?.[sec] || "";
+  $("#panel").classList.remove("oculto");
+}
+function refrescarPanel() {
+  if (!panelActual || $("#panel").classList.contains("oculto")) return;
+  const ae = document.activeElement;
+  if (ae && ae.matches("input, textarea, select") && $("#panel").contains(ae)) return;
+  if (!personajes[panelActual.id]) { $("#panel").classList.add("oculto"); return; }
+  $("#panelCuerpo").innerHTML = formularios[panelActual.id]?.[panelActual.sec] || "";
+}
+$("#panelCerrar").onclick = () => $("#panel").classList.add("oculto");
+let botinId = null, hallazgoId = null, hallazgoClave = null;
+$("#botinFilas").innerHTML = Array.from({ length: 7 }, () => `<div class="fila-botin"><input placeholder="Objeto"><input type="number" min="1" placeholder="Cant." value="1"></div>`).join("");
+function abrirBotin(id) {
+  botinId = id;
+  const lista = Object.values(personajes[id]?.botin || {});
+  $("#botinTitulo").textContent = `Objetos de ${personajes[id].nombre}`;
+  document.querySelectorAll("#botinFilas .fila-botin").forEach((fila, i) => {
+    const [n, q] = fila.querySelectorAll("input");
+    n.value = lista[i]?.nombre || "";
+    q.value = lista[i]?.cantidad || 1;
+  });
+  $("#botinVentana").classList.remove("oculto");
+}
+$("#botinCerrar").onclick = () => $("#botinVentana").classList.add("oculto");
+$("#botinGuardar").onclick = () => {
+  const lista = [...document.querySelectorAll("#botinFilas .fila-botin")].map(f => {
+    const [n, q] = f.querySelectorAll("input");
+    return { nombre: n.value.trim(), cantidad: Math.max(1, parseInt(q.value, 10) || 1) };
+  }).filter(o => o.nombre);
+  almacen.actualizar(botinId, { botin: lista.length ? lista : null });
+  $("#botinVentana").classList.add("oculto");
+};
+function pintarHallazgo(visibles) {
+  const f = esDJ ? null : visibles.find(([, c]) => c.hallazgo != null && c.botin && c.botin[c.hallazgo]);
+  if (!f) { $("#hallazgo").classList.add("oculto"); return; }
+  const o = f[1].botin[f[1].hallazgo];
+  hallazgoId = f[0];
+  hallazgoClave = f[1].hallazgo;
+  $("#hallazgoNombre").textContent = `${o.nombre}${o.cantidad > 1 ? " ×" + o.cantidad : ""}`;
+  $("#hallazgo").classList.remove("oculto");
+}
+$("#aceptarHallazgo").onclick = () => {
+  const c = personajes[hallazgoId], o = c?.botin?.[hallazgoClave];
+  if (!o) return;
+  if (Object.keys(c.inventario || {}).length >= MAX_OBJETOS) { alert("Tu inventario está lleno. Gasta algo y vuelve a tocar Aceptar."); return; }
+  Promise.resolve(almacen.aceptarHallazgo(hallazgoId, Date.now().toString(36), { nombre: o.nombre, cantidad: o.cantidad })).catch(() => alert("No se pudo guardar el objeto. Avisa al DJ."));
+};
 setInterval(() => { pintarCirculos(); pintarVelas(); }, 1000);
 
 $("#barras").addEventListener("click", e => {
@@ -491,11 +633,20 @@ $("#barras").addEventListener("click", e => {
     pintar();
     return;
   }
+  const bo = e.target.closest("[data-buscar-obj]");
+  if (bo && !esDJ) {
+    const id = bo.dataset.id, c = personajes[id], lista = Object.keys(c?.botin || {});
+    if (!lista.length) { alert("El DJ aún no cargó objetos para este personaje."); return; }
+    if (Object.keys(c.inventario || {}).length >= MAX_OBJETOS) { alert("Tu inventario está lleno. Gasta algo antes de buscar."); return; }
+    const clave = lista[Math.floor(Math.random() * lista.length)];
+    Promise.resolve(almacen.buscarObjeto(id, clave)).catch(() => alert("No se pudo buscar. Avisa al DJ."));
+    return;
+  }
   const u = e.target.closest("[data-usar]");
   if (u && !esDJ) {
-    const id = u.dataset.id, i = Number(u.dataset.usar), o = personajes[id]?.inventario?.[i];
+    const id = u.dataset.id, k = u.dataset.usar, o = personajes[id]?.inventario?.[k];
     if (o && typeof o === "object" && o.cantidad > 0) {
-      Promise.resolve(almacen.usarObjeto(id, i, o.cantidad - 1)).catch(() => alert("No se pudo usar el objeto. Avisa al DJ."));
+      Promise.resolve(almacen.usarObjeto(id, k, o.cantidad - 1)).catch(() => alert("No se pudo usar el objeto. Avisa al DJ."));
     }
     return;
   }
